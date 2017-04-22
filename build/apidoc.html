@@ -1,0 +1,236 @@
+<div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a
+
+        href="https://github.com/brianc/node-forky"
+
+    >forky (v0.3.0)</a>
+</h1>
+<h4>node-forky ==========</h4>
+<div class="apidocSectionDiv"><a
+    href="#apidoc.tableOfContents"
+    id="apidoc.tableOfContents"
+><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.forky">module forky</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.forky.forky">
+            function <span class="apidocSignatureSpan"></span>forky
+            <span class="apidocSignatureSpan">(options, workerCount, cb)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.forky.disconnect">
+            function <span class="apidocSignatureSpan">forky.</span>disconnect
+            <span class="apidocSignatureSpan">(timeout)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.forky.log">
+            function <span class="apidocSignatureSpan">forky.</span>log
+            <span class="apidocSignatureSpan">()</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.forky" id="apidoc.module.forky">module forky</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.forky.forky" id="apidoc.element.forky.forky">
+        function <span class="apidocSignatureSpan"></span>forky
+        <span class="apidocSignatureSpan">(options, workerCount, cb)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">forky = function (options, workerCount, cb) {
+  var path;
+  if (typeof(options) === &#x27;string&#x27;) {
+    // this is here for backwards compatibility to 0.1.2, remove this when we hit 1.0.0
+    path = options;
+    if(typeof workerCount == &#x27;function&#x27;) {
+      cb = workerCount;
+      workerCount = undefined;
+    }
+  }
+  else {
+    path = options.path;
+    workerCount = options.workers;
+    cb = options.callback;
+
+    if (options.enable_logging !== undefined) {
+      LOG = options.enable_logging;
+    }
+    if (options.kill_timeout !== undefined) {
+      KILL_TIMEOUT = options.kill_timeout;
+    }
+  }
+
+  if (undefined === workerCount) {
+    workerCount = os.cpus().length;
+  }
+
+  cluster.setupMaster({
+    exec: path
+  });
+
+  forky.log(&#x27;starting&#x27;, workerCount, &#x27;workers&#x27;);
+  for(var i = 0; i &#x3c; workerCount; i++) {
+    forkWorker();
+  }
+
+  var listeningWorkers = 0;
+  cluster.on(&#x27;listening&#x27;, function(worker) {
+    if(++listeningWorkers == workerCount) {
+      cb ? cb(null, cluster) : function(){};
+    }
+  });
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.forky.disconnect" id="apidoc.element.forky.disconnect">
+        function <span class="apidocSignatureSpan">forky.</span>disconnect
+        <span class="apidocSignatureSpan">(timeout)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">disconnect = function (timeout) {
+  if(!cluster.isWorker) {
+    throw new Error(&#x22;You are not a worker&#x22;);
+  }
+  var worker = cluster.worker;
+  if(worker.state == &#x27;disconnecting&#x27;) return;
+  worker.state = &#x27;disconnecting&#x27;;
+  worker.disconnectTimeout = timeout;
+  forky.log(&#x27;disconnecting worker&#x27;, worker.id);
+  if(timeout) {
+    worker.send({action: &#x27;disconnect&#x27;, timeout: timeout});
+  } else {
+    worker.send({action: &#x27;disconnect&#x27;});
+  }
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+  }, 1000);
+});
+
+process.on(&#x27;uncaughtException&#x27;, function(err) {
+  //log the error
+  console.error(err);
+  //let&#x27;s tell our master we need to be disconnected
+  require(&#x27;forky&#x27;).<span class="apidocCodeKeywordSpan">disconnect</span>();
+  //in a worker process, this will signal the master that something is wrong
+  //the master will immediately spawn a new worker
+  //and the master will disconnect our server, allowing all existing traffic to end naturally
+  //but not allowing this process to accept any new traffic
+});
+```
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.forky.log" id="apidoc.element.forky.log">
+        function <span class="apidocSignatureSpan">forky.</span>log
+        <span class="apidocSignatureSpan">()</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">log = function () {
+    if (LOG) {
+        console.log.apply(console, arguments);
+    }
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+
+var shuttingDown = false;
+
+var KILL_TIMEOUT = 1000;
+var LOG = false;
+
+function killTimeout(worker, timeout) {
+forky.<span class="apidocCodeKeywordSpan">log</span>(&#x27;setting kill timeout of&#x27;, timeout, &#x27;for worker&#x27;, worker
+.id);
+var tid = setTimeout(function() {
+  forky.log(&#x27;worker&#x27;, worker.id, &#x27;did not shutdown after timeout&#x27;, timeout, &#x27;killing&#x27;);
+  worker.destroy();
+}, timeout);
+worker.once(&#x27;exit&#x27;, function() {
+  forky.log(&#x27;worker&#x27;, worker.id, &#x27;died. clear kill timeout&#x27;);
+  clearTimeout(tid);
+...</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
