@@ -167,20 +167,21 @@
   }
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">...
-  }, 1000);
-});
 
-process.on('uncaughtException', function(err) {
-  //log the error
-  console.error(err);
-  //let's tell our master we need to be disconnected
-  require('forky').<span class="apidocCodeKeywordSpan">disconnect</span>();
-  //in a worker process, this will signal the master that something is wrong
-  //the master will immediately spawn a new worker
-  //and the master will disconnect our server, allowing all existing traffic to end naturally
-  //but not allowing this process to accept any new traffic
-});
-```
+//fork a new worker
+function forkWorker() {
+  if(shuttingDown) return;
+  var worker = cluster.fork();
+  forky.log('forked worker', worker.id);
+  //set up a listener for the disconnect message
+  //a worker can send this by calling `forky.<span class="apidocCodeKeywordSpan">disconnect</span>([timeout])`
+  worker.on('message', function(msg) {
+if(msg.action != 'disconnect') return;
+forkWorker();
+worker.disconnect();
+
+if(!msg.timeout) return;
+killTimeout(worker, msg.timeout);
 ...</pre></li>
     </ul>
 
