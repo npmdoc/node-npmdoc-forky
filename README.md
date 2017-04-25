@@ -1,6 +1,6 @@
 # npmdoc-forky
 
-#### api documentation for  [forky (v0.3.0)](https://github.com/brianc/node-forky)  [![npm package](https://img.shields.io/npm/v/npmdoc-forky.svg?style=flat-square)](https://www.npmjs.org/package/npmdoc-forky) [![travis-ci.org build-status](https://api.travis-ci.org/npmdoc/node-npmdoc-forky.svg)](https://travis-ci.org/npmdoc/node-npmdoc-forky)
+#### basic api documentation for  [forky (v0.3.0)](https://github.com/brianc/node-forky)  [![npm package](https://img.shields.io/npm/v/npmdoc-forky.svg?style=flat-square)](https://www.npmjs.org/package/npmdoc-forky) [![travis-ci.org build-status](https://api.travis-ci.org/npmdoc/node-npmdoc-forky.svg)](https://travis-ci.org/npmdoc/node-npmdoc-forky)
 
 #### node-forky ==========
 
